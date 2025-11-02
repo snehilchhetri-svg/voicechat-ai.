@@ -1,4 +1,0 @@
-flask
-speechrecognition
-gtts
-pyaudio
