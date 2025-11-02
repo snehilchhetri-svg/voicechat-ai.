@@ -1,25 +1,32 @@
-import gradio as gr
-import pyttsx3
-import speech_recognition as sr
+from flask import Flask, request, jsonify
+import random
 
-recognizer = sr.Recognizer()
-engine = pyttsx3.init()
+app = Flask(__name__)
 
-def voice_ai(audio):
-    try:
-        with sr.AudioFile(audio) as source:
-            audio_data = recognizer.record(source)
-            text = recognizer.recognize_google(audio_data)
-            reply = f"You said: {text}"
-            engine.save_to_file(reply, "reply.mp3")
-            engine.runAndWait()
-            return reply, "reply.mp3"
-    except Exception as e:
-        return str(e), None
+@app.route('/')
+def home():
+    return "🤖 Jarvis Cloud Brain is running!"
 
-gr.Interface(
-    fn=voice_ai,
-    inputs=gr.Audio(source="microphone", type="filepath"),
-    outputs=["text", "audio"],
-    title="Voice AI Assistant"
-).launch()
+@app.route('/ask', methods=['POST'])
+def ask():
+    data = request.get_json()
+    user_input = data.get("query", "").lower()
+
+    # Simple demo logic — later we can plug in GPT or logic functions
+    responses = [
+        "I'm here, sir. What would you like me to do?",
+        "At your service, sir.",
+        "Processing your command.",
+        "Of course, I’ll handle that immediately."
+    ]
+
+    if "time" in user_input:
+        from datetime import datetime
+        return jsonify({"response": f"The time is {datetime.now().strftime('%I:%M %p')}"})
+    elif "how are you" in user_input:
+        return jsonify({"response": "I'm fully operational and ready to assist you, sir."})
+    else:
+        return jsonify({"response": random.choice(responses)})
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
