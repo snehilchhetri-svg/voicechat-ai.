@@ -1,7 +1,2 @@
 flask
-speechrecognition
-pyttsx3
-pyaudio
-requests
-joblib
-scikit-learn
+gunicorn
