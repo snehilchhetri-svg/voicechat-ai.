@@ -1,5 +1,6 @@
-Flask
-gTTS
-SpeechRecognition
-pyttsx3
-gunicorn
+flask
+requests
+torch
+transformers
+sentencepiece
+accelerate
