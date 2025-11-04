@@ -1,106 +1,103 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Jarvis AI Console</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jarvis AI</title>
   <style>
     body {
       background-color: #0a0a0a;
       color: #00ffcc;
-      font-family: 'Consolas', monospace;
-      margin: 0;
-      padding: 0;
-    }
-    #chat {
-      width: 90%;
-      max-width: 800px;
-      margin: 40px auto;
-      background: #111;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 0 20px #00ffcc44;
-    }
-    .message {
-      margin: 10px 0;
-      padding: 10px;
-      border-radius: 5px;
-    }
-    .user {
-      text-align: right;
-      color: #00ccff;
-    }
-    .jarvis {
-      text-align: left;
-      color: #00ff99;
-    }
-    #input-area {
+      font-family: 'Courier New', monospace;
       display: flex;
-      margin-top: 10px;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
     }
-    #prompt {
-      flex: 1;
-      padding: 10px;
-      background: #222;
-      color: #fff;
-      border: none;
-      border-radius: 5px;
-      font-size: 16px;
+    h1 {
+      text-shadow: 0 0 15px #00ffcc;
     }
-    #send {
-      padding: 10px 15px;
-      margin-left: 8px;
+    #output {
+      margin-top: 30px;
+      font-size: 1.2rem;
+      width: 80%;
+      text-align: center;
+      min-height: 50px;
+    }
+    button {
       background: #00ffcc;
-      color: #000;
+      color: black;
       border: none;
-      border-radius: 5px;
+      padding: 12px 25px;
+      border-radius: 6px;
+      font-size: 16px;
       cursor: pointer;
-      font-weight: bold;
+      margin-top: 20px;
+      box-shadow: 0 0 15px #00ffcc;
+      transition: 0.3s;
+    }
+    button:hover {
+      background: #00bfa5;
     }
   </style>
 </head>
 <body>
-  <div id="chat">
-    <div id="messages"></div>
-    <div id="input-area">
-      <input id="prompt" type="text" placeholder="Ask Jarvis anything..." />
-      <button id="send">Send</button>
-    </div>
-  </div>
+  <h1>🎙️ Jarvis Online</h1>
+  <div id="output">Tap the button and speak your command...</div>
+  <button id="speakBtn">🎤 Speak</button>
 
   <script>
-    const sendBtn = document.getElementById('send');
-    const promptInput = document.getElementById('prompt');
-    const messagesDiv = document.getElementById('messages');
+    const speakBtn = document.getElementById('speakBtn');
+    const output = document.getElementById('output');
+    const synth = window.speechSynthesis;
 
-    function addMessage(text, sender) {
-      const msg = document.createElement('div');
-      msg.classList.add('message', sender);
-      msg.innerText = text;
-      messagesDiv.appendChild(msg);
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    }
-
-    async function sendPrompt() {
-      const prompt = promptInput.value.trim();
-      if (!prompt) return;
-      addMessage("You: " + prompt, "user");
-      promptInput.value = "";
-
-      addMessage("Jarvis: thinking...", "jarvis");
-      const res = await fetch("/ask", {
+    async function sendToJarvis(text) {
+      output.innerHTML = "🧠 Thinking...";
+      const res = await fetch("/process", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt })
+        body: JSON.stringify({ command: text })
       });
       const data = await res.json();
-
-      messagesDiv.lastChild.innerText = "Jarvis: " + data.reply;
+      output.innerHTML = "Jarvis: " + data.response;
+      speakText(data.response);
     }
 
-    sendBtn.onclick = sendPrompt;
-    promptInput.addEventListener("keypress", e => {
-      if (e.key === "Enter") sendPrompt();
-    });
+    function speakText(text) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.voice = speechSynthesis.getVoices().find(v => v.name.includes("Male") || v.name.includes("David")) || null;
+      utterance.rate = 1;
+      synth.speak(utterance);
+    }
+
+    function listenCommand() {
+      if (!('webkitSpeechRecognition' in window)) {
+        alert("Speech recognition not supported in this browser.");
+        return;
+      }
+
+      const recognition = new webkitSpeechRecognition();
+      recognition.lang = "en-US";
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      recognition.start();
+      output.innerHTML = "🎧 Listening...";
+
+      recognition.onresult = (event) => {
+        const command = event.results[0][0].transcript;
+        output.innerHTML = `You: ${command}`;
+        sendToJarvis(command);
+      };
+
+      recognition.onerror = (event) => {
+        output.innerHTML = "⚠️ Error: " + event.error;
+      };
+    }
+
+    speakBtn.addEventListener("click", listenCommand);
   </script>
 </body>
 </html>
