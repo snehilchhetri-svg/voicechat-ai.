@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Jarvis AI Console</title>
+  <style>
+    body {
+      background-color: #0a0a0a;
+      color: #00ffcc;
+      font-family: 'Consolas', monospace;
+      margin: 0;
+      padding: 0;
+    }
+    #chat {
+      width: 90%;
+      max-width: 800px;
+      margin: 40px auto;
+      background: #111;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 20px #00ffcc44;
+    }
+    .message {
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 5px;
+    }
+    .user {
+      text-align: right;
+      color: #00ccff;
+    }
+    .jarvis {
+      text-align: left;
+      color: #00ff99;
+    }
+    #input-area {
+      display: flex;
+      margin-top: 10px;
+    }
+    #prompt {
+      flex: 1;
+      padding: 10px;
+      background: #222;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+    #send {
+      padding: 10px 15px;
+      margin-left: 8px;
+      background: #00ffcc;
+      color: #000;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div id="chat">
+    <div id="messages"></div>
+    <div id="input-area">
+      <input id="prompt" type="text" placeholder="Ask Jarvis anything..." />
+      <button id="send">Send</button>
+    </div>
+  </div>
+
+  <script>
+    const sendBtn = document.getElementById('send');
+    const promptInput = document.getElementById('prompt');
+    const messagesDiv = document.getElementById('messages');
+
+    function addMessage(text, sender) {
+      const msg = document.createElement('div');
+      msg.classList.add('message', sender);
+      msg.innerText = text;
+      messagesDiv.appendChild(msg);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    async function sendPrompt() {
+      const prompt = promptInput.value.trim();
+      if (!prompt) return;
+      addMessage("You: " + prompt, "user");
+      promptInput.value = "";
+
+      addMessage("Jarvis: thinking...", "jarvis");
+      const res = await fetch("/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt })
+      });
+      const data = await res.json();
+
+      messagesDiv.lastChild.innerText = "Jarvis: " + data.reply;
+    }
+
+    sendBtn.onclick = sendPrompt;
+    promptInput.addEventListener("keypress", e => {
+      if (e.key === "Enter") sendPrompt();
+    });
+  </script>
+</body>
+</html>
